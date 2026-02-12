@@ -1,0 +1,55 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # Auth Service Routes - No authentication required
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+
+        # Taxi Service Routes - Authentication required
+        - id: taxi-service-users
+          uri: lb://TAXI-SERVICE
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthenticationFilter
+
+        - id: taxi-service-drivers
+          uri: lb://TAXI-SERVICE
+          predicates:
+            - Path=/api/drivers/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthenticationFilter
+
+        - id: taxi-service-rides
+          uri: lb://TAXI-SERVICE
+          predicates:
+            - Path=/api/rides/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthenticationFilter
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+jwt:
+  secret: YourSuperSecretKeyForJWTTokenGenerationMustBeLongEnoughForHS512Algorithm
